@@ -21,6 +21,7 @@ FROM node:22-alpine
 RUN corepack enable
 
 WORKDIR /app
+
 COPY prisma/ ./prisma
 COPY package.json tsconfig.json yarn.lock .yarnrc.yml ./
 

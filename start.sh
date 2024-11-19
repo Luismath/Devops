@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "Waiting 5s for database start"
+echo "Esperando o banco de dados"
 sleep 5s
 
 echo "Aplicando Migrações do Prisma"
