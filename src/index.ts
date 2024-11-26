@@ -7,6 +7,11 @@ type Aluno = {
   serie: number;
 };
 
+type AlunoInfo = {
+  nome: string;
+  serie: number;
+};
+
 type Nota = {
   semestre: number;
   nota: number;
@@ -61,6 +66,54 @@ async function criaNota(req: Request, res: Response) {
   }
 }
 
+async function deletaAluno(req: Request, res: Response) {
+  try {
+    const alunoCpf = req.params.cpf;
+    if (!alunoCpf || alunoCpf.length != 11) {
+      res.sendStatus(404);
+      return;
+    }
+    const aluno = await prisma.aluno.findUnique({ where: { cpf: alunoCpf } });
+    if (aluno === null) {
+      res.sendStatus(404);
+      return;
+    }
+    await prisma.aluno.update({
+      where: { cpf: alunoCpf },
+      data: { deletedAt: new Date() },
+    });
+    res.sendStatus(204);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+}
+
+async function atualizaAluno(req: Request, res: Response) {
+  try {
+    const alunoCorpo = req.body as AlunoInfo;
+    const alunoCpf = req.params.cpf;
+    if (!alunoCpf || alunoCpf.length != 11) {
+      res.sendStatus(404);
+      return;
+    }
+    const aluno = prisma.aluno.findUnique({ where: { cpf: alunoCpf } });
+    if (aluno === null) {
+      res.sendStatus(404);
+      return;
+    }
+
+    const alunoAtualizado = await prisma.aluno.update({
+      where: { cpf: alunoCpf },
+      data: alunoCorpo,
+    });
+    res.status(200).json(alunoAtualizado);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+}
+
 function main() {
   let port = Number(process.env.SERVER_PORT);
   if (isNaN(port)) {
@@ -73,13 +126,13 @@ function main() {
 
   route.get("/alunos", listaAlunos);
   route.post("/alunos", criaAluno);
+  route.delete("/alunos/:cpf", deletaAluno);
+  route.put("/alunos/:cpf", atualizaAluno);
   route.post("/alunos/:cpf/notas", criaNota);
 
   app.use(route);
 
-  app.listen(port,() =>
-    console.log(`Aguardando na porta ${port}`)
-  );
+  app.listen(port, () => console.log(`Aguardando na porta ${port}`));
 }
 
 main();
