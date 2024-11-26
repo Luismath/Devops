@@ -1,0 +1,22 @@
+{
+  "name": "devops",
+  "scripts": {
+    "build": "yarn clear && yarn tsc",
+    "clear": "yarn rimraf ./dist",
+    "start:prod": "node ./dist/index.js",
+    "start:dev": "yarn ts-node ./src/index.ts"
+  },
+  "packageManager": "yarn@4.5.1",
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "express": "^4.21.1",
+    "prisma": "^5.22.0"
+  }
+}
