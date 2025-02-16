@@ -30,7 +30,7 @@ RUN yarn workspaces focus --production
 COPY start.sh ./
 RUN chmod +x ./start.sh
 
-COPY --from=builder /app/dist/ ./dist/
+COPY --from=builder /app/dist/src/ ./dist/
 
 CMD [ "./start.sh" ]
 EXPOSE ${SERVER_PORT}

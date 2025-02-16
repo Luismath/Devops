@@ -17,7 +17,7 @@ function main() {
         description: "API para cadastro de alunos produzida para avaliação de na disciplina de DevOps ministrada pelo professor Ítalo no Instituto Federal de Alagoas, Campus Arapiraca.",
       },
     },
-    apis: ['./src/index*']
+    apis: ['./src/index*','./dist/index*']
   }
   const swaggerDocs = swaggerJSDoc(swaggerOptions);
 
