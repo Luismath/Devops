@@ -23,7 +23,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-
+      - name: Ativar corepack
+        run: corepack enable
       - name: Setup NodeJs
         uses: actions/setup-node@v4
         with:
