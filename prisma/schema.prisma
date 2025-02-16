@@ -14,23 +14,21 @@ datasource db {
 }
 
 model Aluno {
-  cpf       String    @id @db.Char(11)
+  cpf       String   @id @db.Char(11)
   nome      String
   serie     Int
   notas     Nota[]
-  createdAt DateTime  @default(dbgenerated("now()"))
-  updatedAt DateTime  @default(dbgenerated("now()")) @updatedAt
-  deletedAt DateTime?
+  createdAt DateTime @default(dbgenerated("now()"))
+  updatedAt DateTime @default(dbgenerated("now()")) @updatedAt
 }
 
 model Nota {
-  aluno     Aluno     @relation(fields: [alunoCpf], references: [cpf])
-  alunoCpf  String    @db.Char(11)
+  aluno     Aluno    @relation(fields: [alunoCpf], references: [cpf], onDelete: Cascade)
+  alunoCpf  String   @db.Char(11)
   semestre  Int
   nota      Float
-  createdAt DateTime  @default(dbgenerated("now()"))
-  updatedAt DateTime  @default(dbgenerated("now()")) @updatedAt
-  deletedAt DateTime?
+  createdAt DateTime @default(dbgenerated("now()"))
+  updatedAt DateTime @default(dbgenerated("now()")) @updatedAt
 
   @@id([alunoCpf, semestre])
 }
