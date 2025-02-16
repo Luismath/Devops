@@ -89,8 +89,8 @@ jobs:
             echo DB_USER=${{ secrets.DB_USER }} >> .env
             echo DB_NAME=${{ secrets.DB_NAME }} >> .env
             echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
-            echo DB_HOST=database
-            echo DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}?schema=public"
+            echo DB_HOST=database >> .env
+            echo DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}?schema=public" >> .env
             # Realizando login no registro Docker
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             # Removendo containers antigo e iniciando os novos
