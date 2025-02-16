@@ -1,0 +1,98 @@
+name: Teste e Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: "Build and Push"
+    runs-on: ${{ matrix.os }}
+    outputs:
+      docker_tag: ${{ steps.generate_tag.outputs.sha }}
+
+    strategy:
+      matrix:
+        node-version: [22]
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Ativar corepack
+        run: corepack enable
+      - name: Setup NodeJs
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Running Tests
+        run: yarn vitest
+      - name: Generate Tag
+        id: generate_tag
+        run: |
+          SHA=$(echo $GITHUB_SHA | head -c7)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Login into the Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker Image
+        run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/${{ secrets.DOCKERHUB_REPO }}:${{ steps.generate_tag.outputs.sha }} .
+
+      - name: Push Docker Image to DockerHub
+        run: docker push ${{secrets.DOCKERHUB_USERNAME}}/${{ secrets.DOCKERHUB_REPO }}:${{ steps.generate_tag.outputs.sha }}
+  deploy:
+    name: Deploy on Digital Ocean
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose file via ssh
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASSWORD }}
+          source: "./compose.prod.yml,./database/*"
+          target: "~/api"
+          overwrite: true
+
+      - name: Configure and Run
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASSWORD }}
+          script: |
+            cd ~/api
+            # Adicionando variaveis de ambiente
+            echo DOCKERHUB_REPO=${{ secrets.DOCKERHUB_REPO }} > .env
+            echo DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }} >> .env
+            echo TAG=${{ needs.build.outputs.docker_tag }} >> .env
+            echo SERVER_PORT=${{ secrets.SERVER_PORT }} >> .env
+            echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
+            echo DB_USER=${{ secrets.DB_USER }} >> .env
+            echo DB_NAME=${{ secrets.DB_NAME }} >> .env
+            echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env
+            echo 'DB_HOST=database' >> .env
+            echo 'DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}?schema=public"' >> .env
+            # Realizando login no registro Docker
+            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+            # Removendo containers antigo e iniciando os novos
+            docker compose down
+            docker compose -f compose.prod.yml up -d --build
